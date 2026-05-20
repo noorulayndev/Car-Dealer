@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/car_model.dart';
 import '../services/firebase_service.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 class InquiryBottomSheet extends StatefulWidget {
   final Car car;
 
@@ -26,10 +26,18 @@ class _InquiryBottomSheetState extends State<InquiryBottomSheet> {
   @override
   void initState() {
     super.initState();
-    _messageController.text =
-        'I am interested in learning more about the ${widget.car.brand} ${widget.car.model} (${widget.car.year}). Please contact me with additional details and availability.';
-  }
 
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      _nameController.text = user.displayName ?? '';
+
+      _emailController.text = user.email ?? '';
+    }
+
+    _messageController.text =
+    'I am interested in learning more about the ${widget.car.brand} ${widget.car.model} (${widget.car.year}). Please contact me with additional details and availability.';
+  }
   @override
   void dispose() {
     _nameController.dispose();

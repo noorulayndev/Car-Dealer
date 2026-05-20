@@ -6,19 +6,19 @@ class Car {
   final String model;
   final int year;
   final double price;
-  final String imagePath;
+  final List<String> imagePaths;
   final int mileage;
   final String fuelType;
   final List<String> features;
   final String description;
 
-  Car({
+  const Car({
     required this.id,
     required this.brand,
     required this.model,
     required this.year,
     required this.price,
-    required this.imagePath,
+    required this.imagePaths,
     required this.mileage,
     required this.fuelType,
     required this.features,
@@ -26,7 +26,7 @@ class Car {
   });
 
   factory Car.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
 
     return Car(
       id: doc.id,
@@ -34,7 +34,7 @@ class Car {
       model: data['model'] ?? '',
       year: data['year'] ?? 0,
       price: (data['price'] ?? 0).toDouble(),
-      imagePath: data['imagePath'] ?? '',
+      imagePaths: List<String>.from(data['imagePaths'] ?? []),
       mileage: data['mileage'] ?? 0,
       fuelType: data['fuelType'] ?? '',
       features: List<String>.from(data['features'] ?? []),
@@ -48,7 +48,7 @@ class Car {
       'model': model,
       'year': year,
       'price': price,
-      'imagePath': imagePath,
+      'imagePaths': imagePaths,
       'mileage': mileage,
       'fuelType': fuelType,
       'features': features,

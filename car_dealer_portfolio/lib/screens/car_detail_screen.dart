@@ -1,226 +1,264 @@
+import 'package:car_dealer_portfolio/services/firebase_service.dart';
+import 'package:car_dealer_portfolio/utils/utils.dart';
+import 'package:car_dealer_portfolio/widgets/inquiry_bottom_sheet.dart';
+import 'package:car_dealer_portfolio/widgets/test_drive_booking_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/favorite_service.dart';
 import '../models/car_model.dart';
-import '../widgets/inquiry_bottom_sheet.dart';
 
 class CarDetailScreen extends StatelessWidget {
   final Car car;
 
-  const CarDetailScreen({
-    super.key,
-    required this.car,
-  });
+  const CarDetailScreen({super.key, required this.car});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeroImageHeader(context),
-            _buildTitleAndPricingBlock(),
-            _buildHorizontalSpecsBar(),
-            _buildFeaturesAndDescription(),
-            _buildDealerProfileCard(context),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroImageHeader(BuildContext context) {
-    return Stack(
-      children: [
-        AspectRatio(
-          aspectRatio: 16 / 10,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-              child: Image.network(
-                car.imagePath,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.blue.shade600,
-                      ),
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.directions_car,
-                          size: 80,
-                          color: Colors.grey.shade500,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: CarImageGallery(imagePaths: car.imagePaths),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 26, 24, 36),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              car.brand,
+                              style: GoogleFonts.poppins(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF333333),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${car.model} (${car.year})',
+                              style: GoogleFonts.poppins(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF5F5F5F),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Image Unavailable',
+                      ),
+                      const SizedBox(width: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 18,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3FA34D),
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF3FA34D).withOpacity(0.35),
+                              blurRadius: 22,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '\$${PriceUtils.formatPrice(car.price)}',
                           style: GoogleFonts.poppins(
-                            color: Colors.grey.shade600,
-                            fontSize: 16,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 34),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SpecCard(
+                          icon: Icons.speed_rounded,
+                          title: 'Mileage',
+                          value: '${PriceUtils.formatNumber(car.mileage)} mi',
+                          color: const Color(0xFF2D9CDB),
+                          backgroundColor: const Color(0xFFEAF6FF),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: _SpecCard(
+                          icon: Icons.bolt_rounded,
+                          title: 'Fuel Type',
+                          value: car.fuelType,
+                          color: const Color(0xFF3FA34D),
+                          backgroundColor: const Color(0xFFEFF9EF),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: _SpecCard(
+                          icon: Icons.calendar_month_rounded,
+                          title: 'Year',
+                          value: '${car.year}',
+                          color: const Color(0xFF9C27B0),
+                          backgroundColor: const Color(0xFFF8EAFB),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  _SectionTitle(title: 'Description'),
+                  const SizedBox(height: 16),
+                  Text(
+                    car.description,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      height: 1.75,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF666666),
                     ),
-                  );
-                },
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  _SectionTitle(title: 'Premium Features'),
+                  const SizedBox(height: 18),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 12,
+                    children: car.features.map((feature) {
+                      return _FeaturePill(text: feature);
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 46),
+
+                  ConsultantContactCard(car: car),
+                ],
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class CarImageGallery extends StatefulWidget {
+  final List<String> imagePaths;
+  const CarImageGallery({super.key, required this.imagePaths});
+  @override
+  State<CarImageGallery> createState() => _CarImageGalleryState();
+}
+
+
+class _CarImageGalleryState extends State<CarImageGallery> {
+  final PageController _pageController = PageController();
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final images = widget.imagePaths;
+
+    if (images.isEmpty) {
+      return Container(
+        height: 360,
+        color: Colors.grey.shade200,
+        child: const Center(
+          child: Icon(Icons.directions_car, size: 80),
         ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+      );
+    }
+
+    return SizedBox(
+      height: 280,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: images.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(36),
+                  child: Image.asset(
+                    images[index],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade300,
+                        child: const Center(
+                          child: Icon(Icons.broken_image, size: 70),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+
+          Positioned(
+            left: 28,
+            top: 58,
+            child: _TopButton(
+              icon: Icons.arrow_back,
+              onTap: () => Navigator.pop(context),
+            ),
+          ),
+
+          Positioned(
+            right: 98,
+            top: 58,
+            child: _TopButton(
+              icon: Icons.share,
+              onTap: () {},
+            ),
+          ),
+
+
+
+          Positioned(
+            bottom: 24,
+            left: 0,
+            right: 0,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                images.length,
+                    (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentIndex == index ? 26 : 8,
+                  height: 8,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                    ),
+                    color: _currentIndex == index
+                        ? Colors.white
+                        : Colors.white54,
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Shared: ${car.brand} ${car.model}',
-                                style: GoogleFonts.poppins(),
-                              ),
-                              backgroundColor: Colors.green.shade600,
-                            ),
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.share,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Bookmarked: ${car.brand} ${car.model}',
-                                style: GoogleFonts.poppins(),
-                              ),
-                              backgroundColor: Colors.orange.shade600,
-                            ),
-                          );
-                        },
-                        icon: const Icon(
-                          Icons.bookmark_border,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTitleAndPricingBlock() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  car.brand,
-                  style: GoogleFonts.poppins(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                Text(
-                  '${car.model} (${car.year})',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.green.shade600, Colors.green.shade700],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.shade200,
-                  offset: const Offset(0, 4),
-                  blurRadius: 12,
-                ),
-              ],
-            ),
-            child: Text(
-              '\$${car.price.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
               ),
             ),
           ),
@@ -228,348 +266,322 @@ class CarDetailScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildHorizontalSpecsBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildSpecCard(
-              Icons.speed,
-              'Mileage',
-              '${car.mileage.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} mi',
-              Colors.blue,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildSpecCard(
-              _getFuelTypeIcon(car.fuelType),
-              'Fuel Type',
-              car.fuelType,
-              _getFuelTypeColor(car.fuelType),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildSpecCard(
-              Icons.calendar_today,
-              'Year',
-              car.year.toString(),
-              Colors.purple,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class _TopButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
 
-  Widget _buildSpecCard(IconData icon, String label, String value, Color color) {
+  const _TopButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: 58,
+      height: 58,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
+        color: Colors.black.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(
+          icon,
+          color: Colors.white,
+          size: 30,
         ),
+      ),
+    );
+  }
+}
+
+class _TopIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _TopIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        height: 66,
+        width: 66,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.35),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Icon(icon, color: Colors.white, size: 32),
+      ),
+    );
+  }
+}
+
+class _SpecCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+  final Color backgroundColor;
+
+  const _SpecCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 122,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: color.withOpacity(0.25), width: 1.5),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 28,
-          ),
-          const SizedBox(height: 8),
+          Icon(icon, size: 36, color: color),
+          const SizedBox(height: 12),
           Text(
-            label,
+            title,
             style: GoogleFonts.poppins(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.grey.shade600,
+              color: const Color(0xFF666666),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
               color: color,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildFeaturesAndDescription() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: GoogleFonts.poppins(
+        fontSize: 24,
+        fontWeight: FontWeight.w800,
+        color: const Color(0xFF333333),
+      ),
+    );
+  }
+}
+
+class _FeaturePill extends StatelessWidget {
+  final String text;
+
+  const _FeaturePill({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFDDF0FF),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: const Color(0xFF90CAF9)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Description',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
+          const Icon(
+            Icons.check_circle,
+            color: Color(0xFF1E88E5),
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              style: GoogleFonts.poppins(
+                color: const Color(0xFF1E88E5),
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            car.description,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              height: 1.6,
-              color: Colors.grey.shade700,
-            ),
+        ],
+      ),
+    );
+  }
+}
+
+class ConsultantContactCard extends StatelessWidget {
+  final Car car;
+
+  const ConsultantContactCard({super.key, required this.car});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
           ),
-          const SizedBox(height: 24),
-          Text(
-            'Premium Features',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: car.features.map((feature) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.blue.shade50,
-                      Colors.blue.shade100,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.blue.shade200,
-                    width: 1,
-                  ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                radius: 38,
+                backgroundColor: Color(0xFFBBDEFB),
+                child: Icon(
+                  Icons.person,
+                  size: 42,
+                  color: Color(0xFF1E88E5),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              ),
+              const SizedBox(width: 22),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.check_circle,
-                      size: 16,
-                      color: Colors.blue.shade600,
-                    ),
-                    const SizedBox(width: 6),
                     Text(
-                      feature,
+                      'Elite Automotive Consultant',
                       style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.blue.shade700,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF333333),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Certified Premium Vehicle\nSpecialist',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        height: 1.3,
+                        color: const Color(0xFF777777),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '★★★★★',
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFFFFB300),
+                        fontSize: 20,
+                        letterSpacing: 2,
                       ),
                     ),
                   ],
                 ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
+          const SizedBox(height: 26),
+          SizedBox(
+            width: double.infinity,
+            height: 58,
+            child: ElevatedButton(
+
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => InquiryBottomSheet(
+                    car: car,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1E88E5),
+                elevation: 8,
+                shadowColor: const Color(0xFF1E88E5).withOpacity(0.35),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                'Inquire About Vehicle',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 58,
+            child: OutlinedButton(
+              onPressed: () async {
+                await FirebaseService().seedMockAvailableSlotsForCar(
+                  carId: car.id,
+                  carModel: '${car.brand} ${car.model} (${car.year})',
+                );
+
+                if (!context.mounted) return;
+
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => TestDriveBookingBottomSheet(
+                    car: car,
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(
+                  color: Color(0xFF1E88E5),
+                  width: 2,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                'Book Showroom Viewing',
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF1E88E5),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          )
+         ,
         ],
       ),
     );
   }
-
-  Widget _buildDealerProfileCard(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade50,
-              Colors.grey.shade100,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade300,
-              offset: const Offset(0, 4),
-              blurRadius: 12,
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.blue.shade100,
-                  child: Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Colors.blue.shade600,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Elite Automotive Consultant',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800,
-                        ),
-                      ),
-                      Text(
-                        'Certified Premium Vehicle Specialist',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: List.generate(5, (index) {
-                          return Icon(
-                            Icons.star,
-                            size: 16,
-                            color: Colors.amber.shade600,
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => InquiryBottomSheet(car: car),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade600,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                ),
-                child: Text(
-                  'Inquire About Vehicle',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text(
-                          'Showroom Visit Scheduled',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        content: Text(
-                          'Your showroom viewing has been scheduled. We\'ll send you a confirmation email shortly.',
-                          style: GoogleFonts.poppins(),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Text(
-                              'OK',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.blue.shade600,
-                  side: BorderSide(
-                    color: Colors.blue.shade600,
-                    width: 2,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Book Showroom Viewing',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getFuelTypeIcon(String fuelType) {
-    switch (fuelType.toLowerCase()) {
-      case 'electric':
-        return Icons.electric_bolt;
-      case 'hybrid':
-        return Icons.eco;
-      case 'gas':
-        return Icons.local_gas_station;
-      default:
-        return Icons.help_outline;
-    }
-  }
-
-  Color _getFuelTypeColor(String fuelType) {
-    switch (fuelType.toLowerCase()) {
-      case 'electric':
-        return Colors.green;
-      case 'hybrid':
-        return Colors.orange;
-      case 'gas':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
 }
+
