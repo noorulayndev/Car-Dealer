@@ -78,6 +78,15 @@ class _InquiryBottomSheetState extends State<InquiryBottomSheet> {
   }
 
   Future<void> _submitInquiry() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to book a test drive'),
+        ),
+      );
+      return;
+    }
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -89,6 +98,7 @@ class _InquiryBottomSheetState extends State<InquiryBottomSheet> {
     try {
       await _firebaseService.submitInquiry(
         carId: widget.car.id,
+        userId: user.uid,
         carModel: '${widget.car.brand} ${widget.car.model} (${widget.car.year})',
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),

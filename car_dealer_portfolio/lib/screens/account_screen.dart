@@ -189,7 +189,7 @@ class _StatsRow extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: StreamBuilder<int>(
-                  stream: _countStream('testDriveBookings'),
+                  stream: _countStream('test_drive_bookings'),
                   builder: (context, snapshot) {
                     return _StatCard(
                       label: 'Test Drives',
@@ -309,7 +309,7 @@ class _ActivitySection extends StatelessWidget {
       valueListenable: FavoriteService.favoriteIds,
       builder: (context, favoriteIds, _) {
         return StreamBuilder<int>(
-          stream: _countStream('testDriveBookings'),
+          stream: _countStream('test_drive_bookings'),
           builder: (context, testDriveSnapshot) {
             return StreamBuilder<int>(
               stream: _countStream('leads'),
@@ -319,22 +319,7 @@ class _ActivitySection extends StatelessWidget {
 
                 return _MenuSection(
                   items: [
-                    _MenuItem(
-                      icon: Icons.favorite_outline,
-                      iconColor: const Color(0xFFE53935),
-                      label: 'My Favourites',
-                      badge: favoriteIds.length.toString(),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FavoritesScreen(
-                              carsFuture: FirebaseService().fetchInventory(),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+
                     _MenuItem(
                       icon: Icons.directions_car_outlined,
                       iconColor: const Color(0xFF1A73E8),

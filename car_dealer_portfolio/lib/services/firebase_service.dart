@@ -271,6 +271,7 @@ class FirebaseService {
 
   Future<void> submitInquiry({
     required String carId,
+    required String userId,
     required String carModel,
     required String name,
     required String email,
@@ -279,6 +280,7 @@ class FirebaseService {
     try {
       await _firestore.collection(_leadsCollection).add({
         'carId': carId,
+        'userId':userId,
         'carModel': carModel,
         'name': name,
         'email': email,
@@ -498,22 +500,22 @@ class FirebaseService {
   }) async {
     final slots = [
       {
-        'date': '2026-05-22',
+        'date': '2026-05-28',
         'time': '09:00 AM',
         'showroom': 'Downtown Showroom',
       },
       {
-        'date': '2026-05-22',
+        'date': '2026-05-28',
         'time': '11:00 AM',
         'showroom': 'Downtown Showroom',
       },
       {
-        'date': '2026-05-23',
+        'date': '2026-05-29',
         'time': '01:00 PM',
         'showroom': 'North Branch',
       },
       {
-        'date': '2026-05-24',
+        'date': '2026-05-29',
         'time': '03:00 PM',
         'showroom': 'Airport Road Branch',
       },
